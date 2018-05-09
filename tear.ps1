@@ -1,7 +1,7 @@
 Param(
     [string]$disc,
-    [string]$out,
-    [string]$finalName,
+    [string]$filename,
+    [string]$preset,
     [string]$title,
     [string]$url,
     [string]$username,
@@ -35,7 +35,8 @@ function checkRequiredArgument {
         Write-Host "Usage: tear.ps1 [options]"
         Write-Host "Options:"
         Write-Host "--disc: required disc number"
-        Write-Host "--out: required location to write mkv to"
+        Write-Host "--filename: required final name for mkv file"
+        Write-Host "--preset: optional preset in handbrake to run"
         Write-Host "--title: optional title number, otherwise rips all"
         Write-Host "--url: optional remote location to copy to"
         Write-Host "--username: username for the remote location"
@@ -45,9 +46,9 @@ function checkRequiredArgument {
 }
 
 #Test that the required programs exist and correctly set on the path
-runProgram -command "makemkvcon" -program "MakeMkv" -suppress true
-runProgram -command "HandBrakeCLI" -program "HandBrake" -supress true
-runProgram -command "pscp.exe" -program "Putty" -supress true
+runProgram -command "makemkvcon" -program "MakeMkv" -suppress $True
+runProgram -command "HandBrakeCLI" -program "HandBrake" -suppress $True
+runProgram -command "pscp.exe" -program "Putty" -suppress $True
 
 #Check if provided correct arguments for remote copy
 if ($url) {
@@ -59,27 +60,28 @@ if ($url) {
 
 #Check that all the required arguments were passed
 checkRequiredArgument -passed $disc -argument "disc"
-checkRequiredArgument -passed $out -argument "out"
+checkRequiredArgument -passed $filename -argument "filename"
 
-$directory = Split-Path $out
-$filename = Split-Path $out -Leaf
 $extension = $filename.Split(".")[1]
 if ($extension -ne "mkv") {
-    Write-Host "Must provide full path and name to a mkv: $out"
+    Write-Host "Must provide full path and name to a mkv: $filename"
     exit
 }
 
 if (!$title) {
     $title="all"
 }
-Write-Host "Ripping title $title on disc $dist to location $directory."
-runProgram -command "makemkvcon -r mkv disc:$disc $title $directory" -program "MakeMKV"
+Write-Host "Ripping title $title on disc $disc to filename $filename."
+runProgram -command "makemkvcon -r mkv disc:$disc $title ." -program "MakeMKV"
 
-$mkvFilename = Get-ChildItem $directory\*.mkv | Sort-Object CreationTime -Descending | Select-Object -First 1
+if ($preset) {
+    $preset = "--$preset"
+}
+$mkvFilename = Get-ChildItem .\*.mkv | Sort-Object CreationTime -Descending | Select-Object -First 1
 Write-Host "Running handbrake for file $mkvFilename and saving it to $filename"
-runProgram -command "HandBrakeCLI -i $mkvFilename -o $out" -program "HandBrake"
+runProgram -command "HandBrakeCLI -Z $preset -i '$mkvFilename' -o '.\$filename'" -program "HandBrake"
 
-Write-Host "Copying file $out to remote location $url"
-runProgram -command "pscp.exe -pw $password $out $username@$url"
+Write-Host "Copying file '$filename' to remote location $url"
+runProgram -command "pscp.exe -pw $password '.\$filename' $username@$url"
 
 Write-Host "All done!"
