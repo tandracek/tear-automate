@@ -75,11 +75,11 @@ Write-Host "Ripping title $title on disc $disc to filename $filename."
 runProgram -command "makemkvcon -r mkv disc:$disc $title ." -program "MakeMKV"
 
 if ($preset) {
-    $preset = "--$preset"
+    $preset = "-Z `"$preset`""
 }
 $mkvFilename = Get-ChildItem .\*.mkv | Sort-Object CreationTime -Descending | Select-Object -First 1
 Write-Host "Running handbrake for file $mkvFilename and saving it to $filename"
-runProgram -command "HandBrakeCLI -Z $preset -i '$mkvFilename' -o '.\$filename'" -program "HandBrake"
+runProgram -command "HandBrakeCLI $preset -i '$mkvFilename' -o '.\$filename'" -program "HandBrake"
 
 Write-Host "Copying file '$filename' to remote location $url"
 runProgram -command "pscp.exe -pw $password '.\$filename' $username@$url"
