@@ -75,7 +75,7 @@ Write-Host "Ripping title $title on disc $disc to filename $filename."
 runProgram -command "makemkvcon -r mkv disc:$disc $title ." -program "MakeMKV"
 
 if ($preset) {
-    $preset = "-Z `"$preset`""
+    $preset = "--preset-import-gui -Z `"$preset`""
 }
 $mkvFilename = Get-ChildItem .\*.mkv | Sort-Object CreationTime -Descending | Select-Object -First 1
 Write-Host "Running handbrake for file $mkvFilename and saving it to $filename"
