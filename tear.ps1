@@ -17,6 +17,10 @@ function runProgram {
         } else {
             Invoke-Expression $command
         }        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "$command failed with exit code $LASTEXITCODE."
+            exit
+        }
     } Catch [System.Management.Automation.CommandNotFoundException] {
         Write-Host "Could not find $program.  Make sure it is installed and set on the path."
         exit
